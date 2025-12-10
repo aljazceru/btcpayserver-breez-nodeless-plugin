@@ -4,7 +4,7 @@
 @model BTCPayServer.Plugins.BreezSpark.BreezSparkSettings?
 @inject BreezSparkService BreezService
 @{
-    ViewData.SetActivePage("Breez", "Configure", "Configure");
+    ViewData.SetActivePage("BreezSpark", "Configure", "Configure");
     var storeId = Context.GetCurrentStoreId();
     var active = (await BreezService.Get(storeId)) is not null;
 }

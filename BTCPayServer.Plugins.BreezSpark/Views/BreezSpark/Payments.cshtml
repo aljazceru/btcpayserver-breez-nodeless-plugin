@@ -9,7 +9,7 @@
 @{
     var storeId = Context.GetCurrentStoreId();
 
-    ViewData.SetActivePage("Breez", "Payments", "Payments");
+    ViewData.SetActivePage("BreezSpark", "Payments", "Payments");
     TempData.TryGetValue("bolt11", out var bolt11);
 }
 
@@ -43,7 +43,7 @@
             </div>
         }
 
-        <partial name="Breez/BreezPaymentsTable" model="Model.Payments"/>
+        <partial name="BreezSpark/BreezSparkPaymentsTable" model="Model.Payments"/>
         <vc:pager view-model="Model"></vc:pager>
     </div>
 </div>

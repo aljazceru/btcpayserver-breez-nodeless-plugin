@@ -11,7 +11,7 @@
 @{
     var storeId = Context.GetImplicitStoreId();
     var address = Context.GetRouteValue("address").ToString();
-    ViewData.SetActivePage("Breez", "Create Swapin Refund", "SwapIn");
+    ViewData.SetActivePage("BreezSpark", "Create Swapin Refund", "SwapIn");
 
     @* TODO: Fix for v2.2.1 - derivation settings check needed *@
     var sdk = BreezService.GetClient(storeId)?.Sdk;

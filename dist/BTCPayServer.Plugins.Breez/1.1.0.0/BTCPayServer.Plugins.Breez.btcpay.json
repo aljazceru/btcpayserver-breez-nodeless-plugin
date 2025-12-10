@@ -1,0 +1,1 @@
+{"Identifier":"BTCPayServer.Plugins.Breez","Name":"Breez Spark Lightning Plugin","Version":"1.1.0.0","Description":"Nodeless Lightning payments powered by Breez Spark SDK","SystemPlugin":false,"Dependencies":[{"Identifier":"BTCPayServer","Condition":"\u003E=2.2.0"}]}

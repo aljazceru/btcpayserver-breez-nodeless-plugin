@@ -33,20 +33,20 @@
     }
 }
 <style>
-    #Breez-Info{
+    #BreezSpark-Info{
         order: -3;
     }
     @@media (min-width: 1200px) {
-        #Breez-Info{
+        #BreezSpark-Info{
         grid-column-start: 1; grid-column-end: 6;     order: -3;
     }}
 </style>
 
-<div class="widget store-numbers" id="Breez-Info" style="">
+<div class="widget store-numbers" id="BreezSpark-Info" style="">
     @if (Model is StoreDashboardViewModel)
     {
         <header>
-            <h4>Breez Node</h4>
+            <h4>BreezSpark Node</h4>
             <a asp-action="Info" asp-controller="BreezSpark" asp-route-storeId="@storeId">
                 Manage
             </a>
@@ -80,10 +80,10 @@
     else
     {
         <div class="text-center p-3">
-            <p class="text-muted">Breez node information not available</p>
+            <p class="text-muted">BreezSpark node information not available</p>
             @if (string.IsNullOrEmpty(storeId))
             {
-                <a asp-action="Configure" asp-controller="BreezSpark" asp-route-storeId="@storeId">Configure Breez</a>
+                <a asp-action="Configure" asp-controller="BreezSpark" asp-route-storeId="@storeId">Configure BreezSpark</a>
             }
         </div>
     }
