@@ -11,7 +11,7 @@ permissions:
 
 env:
   DOTNET_VERSION: "8.0.x"
-  PLUGIN_ARTIFACT_NAME: breez-plugin
+  PLUGIN_ARTIFACT_NAME: breezspark-plugin
 
 jobs:
   build:
@@ -34,10 +34,10 @@ jobs:
           set -euo pipefail
 
           REPO_ROOT="$PWD"
-          PLUGIN_DIR="$REPO_ROOT/BTCPayServer.Plugins.Breez"
+          PLUGIN_DIR="$REPO_ROOT/BTCPayServer.Plugins.BreezSpark"
           BTCPAY_DIR="$REPO_ROOT/btcpayserver"
           DIST_DIR="$REPO_ROOT/dist"
-          PLUGIN_NAME="BTCPayServer.Plugins.Breez"
+          PLUGIN_NAME="BTCPayServer.Plugins.BreezSpark"
           CONFIG="Release"
           PLUGIN_OUTPUT="$PLUGIN_DIR/bin/$CONFIG/net8.0"
 
