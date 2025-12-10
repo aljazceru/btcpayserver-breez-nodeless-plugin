@@ -40,7 +40,7 @@
                if (this.checked) {
                    const storeId = '@Model.StoreId';
                    const paymentKey = '@Html.Raw(paymentKey)';
-                   const connString = `type=breez;key=${paymentKey};storeId=${storeId}`;
+                   const connString = `type=breezspark;key=${paymentKey};storeId=${storeId}`;
                    connStringEl.value = connString;
                }
            });
@@ -52,7 +52,7 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="CustomBreezHeader">
             <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#CustomBreezContent" aria-controls="CustomBreezContent" aria-expanded="false">
-                <span><strong>Breez</strong> non-custodial Lightning wallet</span>
+                <span><strong>BreezSpark</strong> non-custodial Lightning wallet</span>
                 <vc:icon symbol="caret-down"/>
             </button>
         </h2>
@@ -63,7 +63,7 @@
                     <div class="alert alert-info">
                         <strong>Connection string will be auto-filled:</strong>
                         <br/>
-                        <code>type=breez;key=@paymentKey;storeId=@Model.StoreId</code>
+                        <code>type=breezspark;key=@paymentKey;storeId=@Model.StoreId</code>
                     </div>
                     <p class="my-2">
                         The connection string above will be automatically filled when you select Breez.
