@@ -28,11 +28,11 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
        const customNodeAccordian = document.getElementById("CustomNodeSupport");
-       const template = document.getElementById("breez");
+       const template = document.getElementById("breezspark");
        customNodeAccordian.appendChild(template.content.cloneNode(true));
 
-       // Auto-fill the connection string when Breez is selected
-       const breezRadio = document.getElementById("LightningNodeType-Breez");
+       // Auto-fill the connection string when BreezSpark is selected
+       const breezRadio = document.getElementById("LightningNodeType-BreezSpark");
        const connStringEl = document.getElementById('ConnectionString');
 
        if (breezRadio && connStringEl) {
@@ -48,15 +48,15 @@
     });
 </script>
 
-<template id="breez">
+<template id="breezspark">
     <div class="accordion-item">
-        <h2 class="accordion-header" id="CustomBreezHeader">
-            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#CustomBreezContent" aria-controls="CustomBreezContent" aria-expanded="false">
+        <h2 class="accordion-header" id="CustomBreezSparkHeader">
+            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#CustomBreezSparkContent" aria-controls="CustomBreezSparkContent" aria-expanded="false">
                 <span><strong>BreezSpark</strong> non-custodial Lightning wallet</span>
                 <vc:icon symbol="caret-down"/>
             </button>
         </h2>
-        <div id="CustomBreezContent" class="accordion-collapse collapse" aria-labelledby="CustomBreezHeader" data-bs-parent="#CustomNodeSupport">
+        <div id="CustomBreezSparkContent" class="accordion-collapse collapse" aria-labelledby="CustomBreezSparkHeader" data-bs-parent="#CustomNodeSupport">
             <div class="accordion-body">
                 @if (!string.IsNullOrEmpty(paymentKey))
                 {
@@ -66,16 +66,16 @@
                         <code>type=breezspark;key=@paymentKey;storeId=@Model.StoreId</code>
                     </div>
                     <p class="my-2">
-                        The connection string above will be automatically filled when you select Breez.
+                        The connection string above will be automatically filled when you select BreezSpark.
                         Connects to your <a href="https://breez.technology" target="_blank" rel="noreferrer noopener">Breez</a> mobile wallet.
                     </p>
                 }
                 else
                 {
                     <div class="alert alert-warning">
-                        <strong>Breez not configured</strong>
+                        <strong>BreezSpark not configured</strong>
                         <br/>
-                        Please <a href="/Breez/Index?storeId=@Model.StoreId">configure Breez first</a> to set up your payment key.
+                        Please <a href="/BreezSpark/Index?storeId=@Model.StoreId">configure BreezSpark first</a> to set up your payment key.
                     </div>
                     <p class="my-2">Connects to a <a href="https://breez.technology" target="_blank" rel="noreferrer noopener">Breez</a> mobile wallet, using the Breez SDK to handle Lightning payments through swaps.</p>
                 }
@@ -84,7 +84,7 @@
     </div>
 </template>
 
-<div id="BreezSetup" class="pt-3 tab-pane fade" role="tabpanel" aria-labelledby="LightningNodeType-Breez">
-    <p>You can use Breez to accept lightning payments without running a traditional Lightning node.</p>
-    <p>Breez is a mobile-first Lightning Network client that provides a non-custodial solution for Lightning payments.</p>
+<div id="BreezSparkSetup" class="pt-3 tab-pane fade" role="tabpanel" aria-labelledby="LightningNodeType-BreezSpark">
+    <p>You can use BreezSpark to accept lightning payments without running a traditional Lightning node.</p>
+    <p>BreezSpark is a mobile-first Lightning Network client that provides a non-custodial solution for Lightning payments.</p>
 </div>
