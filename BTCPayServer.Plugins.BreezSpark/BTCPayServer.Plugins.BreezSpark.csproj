@@ -5,14 +5,14 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);CS1591;CS0618</NoWarn>
+        <NoWarn>$(NoWarn);CS1591;CS0618;CS8073</NoWarn>
     </PropertyGroup>
 
     <!-- Plugin specific properties -->
     <PropertyGroup>
         <Product>BreezSpark Lightning Plugin</Product>
-        <Description>Nodeless Lightning payments powered by Breez Spark SDK</Description>
-        <Version>1.1.0</Version>
+        <Description>Nodeless Lightning payments powered by Breez Nodeless SDK (Spark)</Description>
+        <Version>0.0.4</Version>
         <Author>Aljaz Ceru</Author>
         <Company>Aljaz Ceru</Company>
         <AssemblyName>BTCPayServer.Plugins.BreezSpark</AssemblyName>
@@ -39,6 +39,11 @@
     <ItemGroup>
         <EmbeddedResource Include="Resources\**" />
         <ProjectReference Include="../btcpayserver/BTCPayServer/BTCPayServer.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="csharp\**\*.cs" />
+        <EmbeddedResource Remove="csharp\**\*" />
+        <None Include="csharp\**\*" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Breez.Sdk.Spark" Version="0.4.1" />

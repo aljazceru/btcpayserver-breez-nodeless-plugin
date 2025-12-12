@@ -215,10 +215,6 @@ public class BreezSparkLightningClient : ILightningClient, IDisposable
 
             return new LightningNodeBalance()
             {
-                OnchainBalance = new OnchainBalance()
-                {
-                    Confirmed = Money.Satoshis((long)response.balanceSats)
-                },
                 OffchainBalance = new OffchainBalance()
                 {
                     Local = LightMoney.Satoshis((long)response.balanceSats),
@@ -230,10 +226,6 @@ public class BreezSparkLightningClient : ILightningClient, IDisposable
         {
             return new LightningNodeBalance()
             {
-                OnchainBalance = new OnchainBalance()
-                {
-                    Confirmed = Money.Zero
-                },
                 OffchainBalance = new OffchainBalance()
                 {
                     Local = LightMoney.Zero,

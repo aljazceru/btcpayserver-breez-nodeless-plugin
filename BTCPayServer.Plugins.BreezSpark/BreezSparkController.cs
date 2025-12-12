@@ -18,6 +18,7 @@ using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.DataEncoders;
 
@@ -32,18 +33,22 @@ public class BreezSparkController : Controller
     private readonly BreezSparkService _breezService;
     private readonly BTCPayWalletProvider _btcWalletProvider;
     private readonly StoreRepository _storeRepository;
+    private readonly ILogger<BreezSparkController> _logger;
 
     public BreezSparkController(
         PaymentMethodHandlerDictionary paymentMethodHandlerDictionary,
         BTCPayNetworkProvider btcPayNetworkProvider,
         BreezSparkService breezService,
-        BTCPayWalletProvider btcWalletProvider, StoreRepository storeRepository)
+        BTCPayWalletProvider btcWalletProvider,
+        StoreRepository storeRepository,
+        ILogger<BreezSparkController> logger)
     {
         _paymentMethodHandlerDictionary = paymentMethodHandlerDictionary;
         _btcPayNetworkProvider = btcPayNetworkProvider;
         _breezService = breezService;
         _btcWalletProvider = btcWalletProvider;
         _storeRepository = storeRepository;
+        _logger = logger;
     }
 
 
@@ -176,7 +181,7 @@ public class BreezSparkController : Controller
             TempData["bolt11"] = response.paymentRequest;
             TempData[WellKnownTempData.SuccessMessage] = "Invoice created successfully!";
 
-            return RedirectToAction(nameof(Payments), new {storeId});
+            return RedirectToAction(nameof(Transactions), new {storeId});
         }
         catch (Exception ex)
         {
@@ -203,11 +208,7 @@ public class BreezSparkController : Controller
                 return RedirectToAction(nameof(Send), new {storeId});
             }
 
-            BigInteger? amountSats = null;
-            if (amount > 0)
-            {
-                amountSats = new BigInteger(amount.Value);
-            }
+            var amountSats = ResolveAmountSats(address, amount);
 
             var prepareRequest = new PrepareSendPaymentRequest(
                 paymentRequest: address,
@@ -219,38 +220,30 @@ public class BreezSparkController : Controller
             if (prepareResponse.paymentMethod is SendPaymentMethod.Bolt11Invoice bolt11Method)
             {
                 var totalFee = bolt11Method.lightningFeeSats + (bolt11Method.sparkTransferFeeSats ?? 0);
-                var viewModel = new
-                {
-                    Destination = address,
-                    Amount = amountSats ?? 0,
-                    Fee = totalFee,
-                    PrepareResponseJson = JsonSerializer.Serialize(prepareResponse)
-                };
-                ViewData["PaymentDetails"] = viewModel;
+                var amt = amountSats ?? BigInteger.Zero;
+                ViewData["PaymentDetails"] = new PaymentDetailsDto(
+                    Destination: address,
+                    Amount: (long)amt,
+                    Fee: (long)totalFee
+                );
             }
             else if (prepareResponse.paymentMethod is SendPaymentMethod.BitcoinAddress bitcoinMethod)
             {
                 var fees = bitcoinMethod.feeQuote;
                 var mediumFee = fees.speedMedium.userFeeSat + fees.speedMedium.l1BroadcastFeeSat;
-                var viewModel = new
-                {
-                    Destination = address,
-                    Amount = amountSats ?? 0,
-                    Fee = mediumFee,
-                    PrepareResponseJson = JsonSerializer.Serialize(prepareResponse)
-                };
-                ViewData["PaymentDetails"] = viewModel;
+                ViewData["PaymentDetails"] = new PaymentDetailsDto(
+                    Destination: address,
+                    Amount: (long)BigInteger.Abs(amountSats ?? BigInteger.Zero),
+                    Fee: (long)mediumFee
+                );
             }
             else if (prepareResponse.paymentMethod is SendPaymentMethod.SparkAddress sparkMethod)
             {
-                var viewModel = new
-                {
-                    Destination = address,
-                    Amount = amountSats ?? 0,
-                    Fee = sparkMethod.fee,
-                    PrepareResponseJson = JsonSerializer.Serialize(prepareResponse)
-                };
-                ViewData["PaymentDetails"] = viewModel;
+                ViewData["PaymentDetails"] = new PaymentDetailsDto(
+                    Destination: address,
+                    Amount: (long)BigInteger.Abs(amountSats ?? BigInteger.Zero),
+                    Fee: (long)sparkMethod.fee
+                );
             }
         }
         catch (Exception ex)
@@ -263,7 +256,7 @@ public class BreezSparkController : Controller
 
     [HttpPost("confirm-send")]
     [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-    public async Task<IActionResult> ConfirmSend(string storeId, string paymentRequest, long amount, string prepareResponseJson)
+    public async Task<IActionResult> ConfirmSend(string storeId, string paymentRequest, long amount)
     {
         var client = _breezService.GetClient(storeId);
         if (client is null)
@@ -273,11 +266,12 @@ public class BreezSparkController : Controller
 
         try
         {
-            var prepareResponse = JsonSerializer.Deserialize<PrepareSendPaymentResponse>(prepareResponseJson);
-            if (prepareResponse == null)
-            {
-                throw new InvalidOperationException("Invalid payment preparation data");
-            }
+            // Re-run preparation to avoid polymorphic JSON deserialization issues
+            var amountSats = ResolveAmountSats(paymentRequest, amount);
+            var prepareResponse = await client.Sdk.PrepareSendPayment(new PrepareSendPaymentRequest(
+                paymentRequest: paymentRequest,
+                amount: amountSats
+            ));
 
             SendPaymentOptions? options = prepareResponse.paymentMethod switch
             {
@@ -289,7 +283,8 @@ public class BreezSparkController : Controller
                     confirmationSpeed: OnchainConfirmationSpeed.Medium
                 ),
                 SendPaymentMethod.SparkAddress => null,
-                _ => throw new NotSupportedException("Unsupported payment method")
+                SendPaymentMethod.SparkInvoice => null,
+                _ => null
             };
 
             var sendRequest = new SendPaymentRequest(
@@ -297,14 +292,18 @@ public class BreezSparkController : Controller
                 options: options
             );
 
+            _logger.LogInformation("BreezSpark sending payment for store {StoreId} to {Destination}", storeId, paymentRequest);
             var sendResponse = await client.Sdk.SendPayment(sendRequest);
+            _logger.LogInformation("BreezSpark send complete for store {StoreId}: payment id {PaymentId}, status {Status}",
+                storeId, sendResponse.payment?.id, sendResponse.payment?.status);
 
             TempData[WellKnownTempData.SuccessMessage] = "Payment sent successfully!";
-            return RedirectToAction(nameof(Payments), new {storeId});
+            return RedirectToAction(nameof(Transactions), new {storeId});
         }
         catch (Exception ex)
         {
             TempData[WellKnownTempData.ErrorMessage] = $"Error sending payment: {ex.Message}";
+            _logger.LogError(ex, "BreezSpark send failed for store {StoreId}", storeId);
             return RedirectToAction(nameof(Send), new {storeId});
         }
     }
@@ -484,9 +483,9 @@ public class BreezSparkController : Controller
         return NotFound();
     }
 
-    [Route("payments")]
+    [Route("transactions")]
     [Authorize(Policy = Policies.CanViewStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-    public async Task<IActionResult> Payments(string storeId, PaymentsViewModel viewModel)
+    public async Task<IActionResult> Transactions(string storeId, PaymentsViewModel viewModel)
     {
         var client = _breezService.GetClient(storeId);
         if (client is null)
@@ -495,6 +494,7 @@ public class BreezSparkController : Controller
         }
 
         viewModel ??= new PaymentsViewModel();
+        viewModel.Balance = await client.GetBalance();
         var req = new ListPaymentsRequest(
             typeFilter: null,
             statusFilter: null,
@@ -506,17 +506,74 @@ public class BreezSparkController : Controller
             sortAscending: false
         );
         var response = await client.Sdk.ListPayments(req);
-        viewModel.Payments = response.payments.Select(client.NormalizePayment).ToList();
+        var normalized = new List<NormalizedPayment>();
+        foreach (var p in response.payments.Where(p => p != null))
+        {
+            var norm = client.NormalizePayment(p);
+            if (norm is not null)
+            {
+                normalized.Add(norm);
+                continue;
+            }
 
-        return View(viewModel);
+            // Fallback: show raw SDK payment even if we lack invoice context
+            long amountSat = 0;
+            if (p.details is PaymentDetails.Lightning l && !string.IsNullOrEmpty(l.invoice))
+            {
+                var nbitcoinNetwork = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>("BTC")?.NBitcoinNetwork ?? NBitcoin.Network.Main;
+                if (BOLT11PaymentRequest.TryParse(l.invoice, out var pr, nbitcoinNetwork) && pr?.MinimumAmount is not null)
+                {
+                    amountSat = (long)pr.MinimumAmount.ToUnit(LightMoneyUnit.Satoshi);
+                }
+            }
+
+            long feeSat = 0;
+            if (p.fees != null)
+            {
+                feeSat = (long)(p.fees / 1000);
+            }
+            normalized.Add(new NormalizedPayment
+            {
+                Id = p.id ?? Guid.NewGuid().ToString("N"),
+                PaymentType = p.paymentType,
+                Status = p.status,
+                Timestamp = p.timestamp,
+                Amount = LightMoney.Satoshis(amountSat),
+                Fee = LightMoney.Satoshis(feeSat),
+                Description = p.details?.ToString() ?? "BreezSpark payment"
+            });
+        }
+        viewModel.Payments = normalized;
+
+        return View("Transactions", viewModel);
+    }
+
+    private BigInteger? ResolveAmountSats(string paymentRequest, long? amount)
+    {
+        if (amount.HasValue && amount.Value > 0)
+        {
+            return new BigInteger(amount.Value);
+        }
+
+        // Try to derive amount from bolt11 invoice if present
+        var nbitcoinNetwork = _btcPayNetworkProvider.GetNetwork<BTCPayNetwork>("BTC")?.NBitcoinNetwork ?? NBitcoin.Network.Main;
+        if (BOLT11PaymentRequest.TryParse(paymentRequest, out var pr, nbitcoinNetwork) && pr?.MinimumAmount is not null)
+        {
+            return new BigInteger((long)pr.MinimumAmount.ToUnit(LightMoneyUnit.Satoshi));
+        }
+
+        return null;
     }
 }
 
 public class PaymentsViewModel : BasePagingViewModel
 {
     public List<NormalizedPayment> Payments { get; set; } = new();
+    public LightningNodeBalance? Balance { get; set; }
     public override int CurrentPageCount => Payments.Count;
 }
+
+public record PaymentDetailsDto(string Destination, long Amount, long Fee);
 
 // Helper class for swap information display in views
 public class SwapInfo

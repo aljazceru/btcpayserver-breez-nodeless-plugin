@@ -5,11 +5,12 @@
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @using BTCPayServer.Components.QRCode
 @using BTCPayServer.Components.TruncateCenter
+@using BTCPayServer.Lightning
 @model BTCPayServer.Plugins.BreezSpark.PaymentsViewModel
 @{
     var storeId = Context.GetCurrentStoreId();
 
-    ViewData.SetActivePage("BreezSpark", "Payments", "Payments");
+    ViewData.SetActivePage("BreezSpark", "Transactions", "Transactions");
     TempData.TryGetValue("bolt11", out var bolt11);
 }
 
@@ -17,7 +18,7 @@
     <div class="col-12">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h3 class="mb-0">
-                <span>@ViewData["Title"]</span>
+                <span>Transactions</span>
             </h3>
             <div class="d-flex gap-3 mt-3 mt-sm-0">
 
@@ -43,7 +44,7 @@
             </div>
         }
 
-        <partial name="BreezSpark/BreezSparkPaymentsTable" model="Model.Payments"/>
+        <partial name="BreezSpark/BreezSparkTransactionsTable" model="Model.Payments"/>
         <vc:pager view-model="Model"></vc:pager>
     </div>
 </div>

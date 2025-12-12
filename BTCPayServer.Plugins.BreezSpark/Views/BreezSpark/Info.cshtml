@@ -9,6 +9,7 @@
 @using BTCPayServer.Security
 @using BTCPayServer.Services
 @using BTCPayServer.Services.Invoices
+@using BTCPayServer.Lightning
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @using NBitcoin
 @inject BreezSparkService BreezService
@@ -22,14 +23,17 @@
         StoreDashboardViewModel dashboardModel => dashboardModel.StoreId,
         _ => Context.GetImplicitStoreId()
     };
-    var sdk = BreezService.GetClient(storeId)?.Sdk;
-    if (sdk is null)
+    var client = BreezService.GetClient(storeId);
+    var sdk = client?.Sdk;
+    if (client is null || sdk is null)
         return;
+
+    LightningNodeBalance balance = await client.GetBalance();
 }
 
 <div class="row mb-4 mt-4">
     <div class="col-12">
-        <h3>BreezSpark Lightning Node Information</h3>
+        <h3>BreezSpark Lightning Balance</h3>
 
         @try
         {
@@ -37,39 +41,13 @@
             {
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Node Status</h5>
+                        <h5 class="card-title mb-0">Balance</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted">
-                            BreezSpark Lightning Node is connected and operational.
-                            This is a simplified view for SDK v0.4.1 compatibility.
-                        </p>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <dl class="row">
-                                    <dt class="col-sm-6">Status</dt>
-                                    <dd class="col-sm-6">
-                                        <span class="badge bg-success">Connected</span>
-                                    </dd>
-
-                                    <dt class="col-sm-6">Network</dt>
-                                    <dd class="col-sm-6">Bitcoin</dd>
-
-                                    <dt class="col-sm-6">Type</dt>
-                                    <dd class="col-sm-6">Breez Spark SDK v0.4.1</dd>
-                                </dl>
-                            </div>
-                            <div class="col-md-6">
-                                <dl class="row">
-                                    <dt class="col-sm-6">Service</dt>
-                                    <dd class="col-sm-6">Lightning Network</dd>
-
-                                    <dt class="col-sm-6">Integration</dt>
-                                    <dd class="col-sm-6">BTCPay Server</dd>
-                                </dl>
-                            </div>
-                        </div>
+                        <h3 class="mb-0">
+                            @((balance?.OffchainBalance?.Local ?? LightMoney.Zero).ToDecimal(LightMoneyUnit.BTC)) BTC
+                        </h3>
+                        <p class="text-muted mb-0">Off-chain balance (Breez Spark)</p>
                     </div>
                 </div>
 
@@ -80,13 +58,13 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <a href="@Url.Action("SwapIn", "BreezSpark", new { storeId = storeId })" class="btn btn-primary w-100 mb-2">
-                                    <i class="bi bi-arrow-down-circle"></i> Swap In
+                                <a href="@Url.Action("Receive", "BreezSpark", new { storeId = storeId })" class="btn btn-primary w-100 mb-2">
+                                    <i class="bi bi-arrow-down-circle"></i> Receive
                                 </a>
                             </div>
                             <div class="col-md-6">
-                                <a href="@Url.Action("SwapOut", "BreezSpark", new { storeId = storeId })" class="btn btn-success w-100 mb-2">
-                                    <i class="bi bi-arrow-up-circle"></i> Swap Out
+                                <a href="@Url.Action("Send", "BreezSpark", new { storeId = storeId })" class="btn btn-success w-100 mb-2">
+                                    <i class="bi bi-arrow-up-circle"></i> Send
                                 </a>
                             </div>
                         </div>

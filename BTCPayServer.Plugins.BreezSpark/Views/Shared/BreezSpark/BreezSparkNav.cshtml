@@ -45,7 +45,7 @@
             <a permission="@Policies.CanViewStoreSettings" asp-action="Info" asp-route-storeId="@storeId" class="nav-link @ViewData.ActivePageClass("BreezSpark", null, "Info")">Info</a>
         </li>
         <li class="nav-item nav-item-sub">
-            <a permission="@Policies.CanViewStoreSettings" asp-action="Payments" asp-route-storeId="@storeId" class="nav-link @ViewData.ActivePageClass("BreezSpark", null, "Payments")">Payments</a>
+            <a permission="@Policies.CanViewStoreSettings" asp-action="Transactions" asp-route-storeId="@storeId" class="nav-link @ViewData.ActivePageClass("BreezSpark", null, "Transactions")">Transactions</a>
         </li>
         <li class="nav-item nav-item-sub">
             <a permission="@Policies.CanModifyStoreSettings" asp-action="Configure" asp-route-storeId="@storeId" class="nav-link @ViewData.ActivePageClass("BreezSpark", null, "Configure")">Configuration</a>

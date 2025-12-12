@@ -5,7 +5,7 @@
 @using BTCPayServer.Security
 @model List<NormalizedPayment>
 @{
-    var data = Model ?? new List<NormalizedPayment>();
+    var data = (Model ?? new List<NormalizedPayment>()).Where(p => p != null).ToList();
     var storeId = Context.GetImplicitStoreId() ?? string.Empty;
     var isDashboard = false;
 }
@@ -20,20 +20,11 @@
 </style>
 }
 <div id="breezspark-payments" class="@(isDashboard ? "widget store-wallet-balance" : "")">
-    @if (isDashboard)
-    {
-        <header>
-            <h3>BreezSpark Payments</h3>
-            @if (data.Any())
-            {
-                <a asp-controller="BreezSpark" asp-action="Payments" asp-route-storeId="@storeId">View All</a>
-            }
-        </header>
-    }
+            @* Dashboard widget header removed for simplicity *@
     @if (!data.Any())
     {
         <p class="text-secondary mt-3 mb-0">
-            There are no recent payments.
+            There are no recent transactions.
         </p>
     }
     else
@@ -54,6 +45,10 @@
                 <tbody>
                 @foreach (var payment in data)
                 {
+                    if (payment == null)
+                    {
+                        continue;
+                    }
                     <tr>
                         <td class="smMaxWidth text-truncate">
 
